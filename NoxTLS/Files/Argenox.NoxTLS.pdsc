@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<package schemaVersion="1.7.40" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="PACK.xsd">
+    <vendor>Argenox</vendor>
+    <name>NoxTLS</name>
+    <description>NoxTLS is a lightweight, embedded-focused TLS and cryptography library designed for microcontrollers, IoT devices, and resource-constrained systems. The STM32Cube Expansion Package integrates NoxTLS directly into the STM32Cube ecosystem, providing secure communication capabilities for STM32 applications with support for modern TLS protocols, cryptographic algorithms, and STM32 hardware acceleration features.</description>
+    <url/>
+    <releases>
+        <release date="2026-05-18" version="0.1.0">Initial Release</release>
+    </releases>
+    <keywords>
+        <keyword>CUBE_RULES_COMPLIANT</keyword>
+    </keywords>
+</package>

@@ -1,0 +1,28 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build/temp artifacts
+build/
+out/
+*.log
+*.tmp
+*.cache
+
+# Toolchain artifacts
+*.o
+*.obj
+*.d
+*.elf
+*.axf
+*.hex
+*.bin
+*.map
+
+# STM32PackCreator generated package archives
+NoxTLS/*.pack
+
+# STM32PackCreator transient file
+NoxTLS/.project/untrackedFilesList.txt
