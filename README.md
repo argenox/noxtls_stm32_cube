@@ -49,3 +49,15 @@ This repository tracks the STM32Cube Expansion Pack project for **Argenox NoxTLS
   2. run `./scripts/sync-noxtls.sh`
   3. run `./scripts/build-pack.sh`
   4. upload artifacts from `artifacts/pack/`
+
+## Tag Release Flow
+
+- Workflow file: `.github/workflows/release-pack.yml`
+- Trigger:
+  - push a tag matching `v*` (example: `v0.1.0`)
+- Pipeline steps:
+  1. checkout with submodules
+  2. sync `NoxTLS/Files` from upstream mirror
+  3. build `.pack` into `artifacts/pack`
+  4. verify tag version matches latest PDSC release version
+  5. create GitHub Release and upload `.pack` + `.pdsc` assets
