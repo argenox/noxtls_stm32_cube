@@ -55,6 +55,7 @@ This repository tracks the STM32Cube Expansion Pack project for **Argenox NoxTLS
 - Workflow file: `.github/workflows/release-pack.yml`
 - Trigger:
   - push a tag matching `v*` (example: `v0.1.0`)
+  - manual `workflow_dispatch` with input `tag` (example: `v0.1.0`)
 - Pipeline steps:
   1. checkout with submodules
   2. sync `NoxTLS/Files` from upstream mirror
