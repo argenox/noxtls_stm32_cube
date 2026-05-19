@@ -87,8 +87,10 @@ update_pdsc_file_list() {
   local generated_lines_file="$2"
   local tmp_file
 
-  grep -q "$begin_marker" "$pdsc_path" || { echo "Error: begin marker missing in $pdsc_path" >&2; exit 1; }
-  grep -q "$end_marker" "$pdsc_path" || { echo "Error: end marker missing in $pdsc_path" >&2; exit 1; }
+  if ! grep -q "$begin_marker" "$pdsc_path" || ! grep -q "$end_marker" "$pdsc_path"; then
+    echo "Warning: Skipping PDSC auto-update for $pdsc_path because SYNC_NOXTLS markers are missing." >&2
+    return 1
+  fi
 
   tmp_file="$(mktemp)"
 
@@ -121,11 +123,12 @@ update_pdsc_file_list() {
     }
   ' "$pdsc_path" > "$tmp_file" || {
     rm -f "$tmp_file"
-    echo "Error: failed to update sync block in $pdsc_path" >&2
-    exit 1
+    echo "Warning: failed to update sync block in $pdsc_path; leaving file unchanged." >&2
+    return 1
   }
 
   mv "$tmp_file" "$pdsc_path"
+  return 0
 }
 
 assert_exists "$upstream_root" "Missing third_party/noxtls. Add/update the submodule first."
@@ -193,15 +196,24 @@ if [[ "$skip_pdsc_update" -eq 0 ]]; then
     printf '                    <file category="sourceC" name="%s"/>\n' "$rel_source" >> "$generated_lines_file"
   done < <(find "$source_root" -type f -name '*.c' -print0 | sort -z)
 
+  updated_project_pdsc=0
   for pdsc_path in "${pdsc_paths[@]}"; do
     assert_exists "$pdsc_path" "Missing PDSC file: $pdsc_path"
-    update_pdsc_file_list "$pdsc_path" "$generated_lines_file"
+    if update_pdsc_file_list "$pdsc_path" "$generated_lines_file"; then
+      if [[ "$pdsc_path" == "${pdsc_paths[1]}" ]]; then
+        updated_project_pdsc=1
+      fi
+    fi
   done
 
   # STM32PackCreator reads .project/projectFile.xml as project source.
   # Keep it identical to the .project PDSC so GUI reflects synchronized files/components.
-  assert_exists "${pdsc_paths[1]}" "Missing project PDSC: ${pdsc_paths[1]}"
-  cp -f "${pdsc_paths[1]}" "$project_file_xml_path"
+  if [[ "$updated_project_pdsc" -eq 1 ]]; then
+    assert_exists "${pdsc_paths[1]}" "Missing project PDSC: ${pdsc_paths[1]}"
+    cp -f "${pdsc_paths[1]}" "$project_file_xml_path"
+  else
+    echo "Warning: Skipping projectFile.xml refresh because .project PDSC was not auto-updated." >&2
+  fi
 fi
 
 # STM32PackCreator resolves sources from .project/OriginalPack during generation.

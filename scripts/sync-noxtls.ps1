@@ -104,7 +104,8 @@ function Update-PdscFileList {
     $endIndex = $content.IndexOf($endMarker)
 
     if ($beginIndex -lt 0 -or $endIndex -lt 0 -or $endIndex -lt $beginIndex) {
-        throw "Sync markers are missing or malformed in $PdscPath"
+        Write-Warning "Skipping PDSC auto-update for $PdscPath because SYNC_NOXTLS markers are missing."
+        return $false
     }
 
     $prefix = $content.Substring(0, $beginIndex + $beginMarker.Length)
@@ -116,6 +117,7 @@ function Update-PdscFileList {
 
     $newContent = $prefix + $insert + "`r`n                    " + $suffix
     Set-Content -LiteralPath $PdscPath -Value $newContent -NoNewline
+    return $true
 }
 
 Assert-Exists -Path $upstreamRoot -Message "Missing third_party/noxtls. Add/update the submodule first."
@@ -193,15 +195,23 @@ if (-not $SkipPdscUpdate) {
         $generatedPdscLines += ("                    <file category=""sourceC"" name=""{0}""/>" -f $relativeSource)
     }
 
+    $updatedProjectPdsc = $false
     foreach ($pdscPath in $pdscPaths) {
         Assert-Exists -Path $pdscPath -Message "Missing PDSC file: $pdscPath"
-        Update-PdscFileList -PdscPath $pdscPath -GeneratedLines $generatedPdscLines
+        $updated = Update-PdscFileList -PdscPath $pdscPath -GeneratedLines $generatedPdscLines
+        if ($pdscPath -eq $pdscPaths[1] -and $updated) {
+            $updatedProjectPdsc = $true
+        }
     }
 
     # STM32PackCreator reads .project/projectFile.xml as project source.
     # Keep it identical to the .project PDSC so GUI reflects synchronized files/components.
-    Assert-Exists -Path $pdscPaths[1] -Message "Missing project PDSC: $($pdscPaths[1])"
-    Copy-Item -LiteralPath $pdscPaths[1] -Destination $projectFileXmlPath -Force
+    if ($updatedProjectPdsc) {
+        Assert-Exists -Path $pdscPaths[1] -Message "Missing project PDSC: $($pdscPaths[1])"
+        Copy-Item -LiteralPath $pdscPaths[1] -Destination $projectFileXmlPath -Force
+    } else {
+        Write-Warning "Skipping projectFile.xml refresh because .project PDSC was not auto-updated."
+    }
 }
 
 # STM32PackCreator resolves sources from .project/OriginalPack during generation.
