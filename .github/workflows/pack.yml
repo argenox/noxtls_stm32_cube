@@ -1,0 +1,44 @@
+name: Build NoxTLS Pack
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/pack.yml"
+      - "NoxTLS/**"
+      - "scripts/**"
+      - "third_party/noxtls"
+      - ".gitmodules"
+  pull_request:
+    paths:
+      - ".github/workflows/pack.yml"
+      - "NoxTLS/**"
+      - "scripts/**"
+      - "third_party/noxtls"
+      - ".gitmodules"
+
+jobs:
+  build-pack:
+    runs-on:
+      - self-hosted
+      - linux
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Sync NoxTLS into pack staging
+        run: ./scripts/sync-noxtls.sh
+
+      - name: Build .pack archive
+        run: ./scripts/build-pack.sh
+
+      - name: Upload pack artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: noxtls-pack
+          path: artifacts/pack/*
+          if-no-files-found: error
