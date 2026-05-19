@@ -26,3 +26,6 @@ NoxTLS/*.pack
 
 # STM32PackCreator transient file
 NoxTLS/.project/untrackedFilesList.txt
+
+# STM32PackCreator generated source mirror used at generation time
+NoxTLS/.project/OriginalPack/

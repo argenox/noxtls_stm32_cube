@@ -33,10 +33,12 @@ pack_root="$repo_root/NoxTLS/Files"
 include_root="$pack_root/Include"
 source_root="$pack_root/Source"
 third_party_root="$pack_root/ThirdParty/noxtls"
+original_pack_root="$repo_root/NoxTLS/.project/OriginalPack"
 pdsc_paths=(
   "$repo_root/NoxTLS/Files/Argenox.NoxTLS.pdsc"
   "$repo_root/NoxTLS/.project/Argenox.NoxTLS.pdsc"
 )
+project_file_xml_path="$repo_root/NoxTLS/.project/projectFile.xml"
 
 begin_marker="<!-- SYNC_NOXTLS_BEGIN -->"
 end_marker="<!-- SYNC_NOXTLS_END -->"
@@ -51,6 +53,14 @@ clear_directory() {
   local path="$1"
   mkdir -p "$path"
   find "$path" -mindepth 1 -exec rm -rf {} +
+}
+
+mirror_directory() {
+  local source_path="$1"
+  local destination_path="$2"
+  mkdir -p "$destination_path"
+  find "$destination_path" -mindepth 1 -exec rm -rf {} +
+  cp -a "$source_path/." "$destination_path/"
 }
 
 copy_with_relative_path() {
@@ -187,7 +197,16 @@ if [[ "$skip_pdsc_update" -eq 0 ]]; then
     assert_exists "$pdsc_path" "Missing PDSC file: $pdsc_path"
     update_pdsc_file_list "$pdsc_path" "$generated_lines_file"
   done
+
+  # STM32PackCreator reads .project/projectFile.xml as project source.
+  # Keep it identical to the .project PDSC so GUI reflects synchronized files/components.
+  assert_exists "${pdsc_paths[1]}" "Missing project PDSC: ${pdsc_paths[1]}"
+  cp -f "${pdsc_paths[1]}" "$project_file_xml_path"
 fi
+
+# STM32PackCreator resolves sources from .project/OriginalPack during generation.
+# Mirror the pack staging tree there so all referenced files exist for GUI generation.
+mirror_directory "$pack_root" "$original_pack_root"
 
 header_count="$(find "$include_root" -type f -name '*.h' | wc -l | tr -d ' ')"
 source_count="$(find "$source_root" -type f -name '*.c' | wc -l | tr -d ' ')"

@@ -13,10 +13,12 @@ $packRoot = Join-Path $repoRoot "NoxTLS/Files"
 $includeRoot = Join-Path $packRoot "Include"
 $sourceRoot = Join-Path $packRoot "Source"
 $thirdPartyRoot = Join-Path $packRoot "ThirdParty/noxtls"
+$originalPackRoot = Join-Path $repoRoot "NoxTLS/.project/OriginalPack"
 $pdscPaths = @(
     (Join-Path $repoRoot "NoxTLS/Files/Argenox.NoxTLS.pdsc"),
     (Join-Path $repoRoot "NoxTLS/.project/Argenox.NoxTLS.pdsc")
 )
+$projectFileXmlPath = Join-Path $repoRoot "NoxTLS/.project/projectFile.xml"
 
 function Assert-Exists {
     param(
@@ -36,6 +38,23 @@ function Clear-Directory {
     }
     Get-ChildItem -LiteralPath $Path -Force | ForEach-Object {
         Remove-Item -LiteralPath $_.FullName -Recurse -Force
+    }
+}
+
+function Mirror-Directory {
+    param(
+        [Parameter(Mandatory = $true)][string]$SourcePath,
+        [Parameter(Mandatory = $true)][string]$DestinationPath
+    )
+    if (Test-Path -LiteralPath $DestinationPath) {
+        Get-ChildItem -LiteralPath $DestinationPath -Force | ForEach-Object {
+            Remove-Item -LiteralPath $_.FullName -Recurse -Force
+        }
+    } else {
+        New-Item -ItemType Directory -Path $DestinationPath -Force | Out-Null
+    }
+    Get-ChildItem -LiteralPath $SourcePath -Force | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination $DestinationPath -Recurse -Force
     }
 }
 
@@ -178,7 +197,16 @@ if (-not $SkipPdscUpdate) {
         Assert-Exists -Path $pdscPath -Message "Missing PDSC file: $pdscPath"
         Update-PdscFileList -PdscPath $pdscPath -GeneratedLines $generatedPdscLines
     }
+
+    # STM32PackCreator reads .project/projectFile.xml as project source.
+    # Keep it identical to the .project PDSC so GUI reflects synchronized files/components.
+    Assert-Exists -Path $pdscPaths[1] -Message "Missing project PDSC: $($pdscPaths[1])"
+    Copy-Item -LiteralPath $pdscPaths[1] -Destination $projectFileXmlPath -Force
 }
+
+# STM32PackCreator resolves sources from .project/OriginalPack during generation.
+# Mirror the pack staging tree there so all referenced files exist for GUI generation.
+Mirror-Directory -SourcePath $packRoot -DestinationPath $originalPackRoot
 
 $headerCount = (Get-ChildItem -Path $includeRoot -Recurse -File -Filter *.h).Count
 $sourceCount = (Get-ChildItem -Path $sourceRoot -Recurse -File -Filter *.c).Count
