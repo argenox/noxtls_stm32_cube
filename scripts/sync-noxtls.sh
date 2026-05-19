@@ -161,6 +161,10 @@ while IFS= read -r -d '' source_file; do
   copy_with_relative_path "$source_file" "$upstream_lib_root" "$source_root/noxtls-lib"
 done < <(find "$upstream_lib_root" -type f -name '*.c' ! -name 'test_*.c' -print0 | sort -z)
 
+while IFS= read -r -d '' include_file; do
+  copy_with_relative_path "$include_file" "$upstream_lib_root" "$source_root/noxtls-lib"
+done < <(find "$upstream_lib_root" -type f -name '*.inc' -print0 | sort -z)
+
 while IFS= read -r -d '' utility_header; do
   copy_with_relative_path "$utility_header" "$upstream_utility_root" "$include_root/utility"
 done < <(find "$upstream_utility_root" -type f -name '*.h' -print0 | sort -z)

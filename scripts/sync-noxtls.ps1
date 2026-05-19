@@ -153,6 +153,12 @@ foreach ($sourceFile in $librarySources) {
     Copy-FileWithRelativePath -File $sourceFile -BasePath $upstreamLibRoot -DestinationRoot (Join-Path $sourceRoot "noxtls-lib")
 }
 
+$libraryIncludes = Get-ChildItem -Path $upstreamLibRoot -Recurse -File -Filter *.inc |
+    Sort-Object FullName
+foreach ($includeFile in $libraryIncludes) {
+    Copy-FileWithRelativePath -File $includeFile -BasePath $upstreamLibRoot -DestinationRoot (Join-Path $sourceRoot "noxtls-lib")
+}
+
 $utilityHeaders = Get-ChildItem -Path $upstreamUtilityRoot -Recurse -File -Filter *.h |
     Sort-Object FullName
 foreach ($header in $utilityHeaders) {
